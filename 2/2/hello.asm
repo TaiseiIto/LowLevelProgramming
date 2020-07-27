@@ -10,3 +10,7 @@ _start:
 	mov rsi, message	; 書き込む文字列
 	mov rdx, 14		; 書き込むバイト数
 	syscall			; write system call
+	mov rax, 60		; exit system callの番号
+	mov rdi, 0		; このプログラムの返り値
+	syscall			; exit system call
+
