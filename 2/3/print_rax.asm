@@ -23,7 +23,7 @@ _start:
 	syscall				; write
 	pop	rcx			; rcx復活
 	pop	rax			; 表示内容復活
-	test	rcx, rcx		; rcx & rcxを計算してフラグを立てる
+	test	rcx, rcx		; rcx & rcxを計算してrflagsを立てる
 	jnz	.loop			; rcx & rcxが0でない(rcx != 0)限り.loopに飛ぶ
 	mov	rax, 1			; 最後に改行文字を出力
 	lea	rsi, [newline]
