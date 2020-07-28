@@ -1,8 +1,12 @@
 section .data
 
-newline_char: db 0x0a
-
 codes: db '0123456789ABCDEF'
+
+demo1: dq 0x0123456789abcdef
+
+demo2: db 0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef
+
+newline_char: db 0x0a
 
 section .text
 global _start
@@ -36,7 +40,10 @@ iterate:				; 一桁ずつ表示していくループ
 	ret				; return rax:n;
 
 _start:					;main関数
-	mov rdi, 0x0123456789abcdef	; rdi:print_hexの第一引数
+	mov	rdi, [demo1]		; rdi:print_hexの第一引数:表示する数 = [demo1]
+	call	print_hex		; rdiを16進数で表示
+	call	print_newline		; 改行出力
+	mov	rdi, [demo2]		; rdi:print_hexの第一引数:表示する数 = [demo2]
 	call	print_hex		; rdiを16進数で表示
 	call	print_newline		; 改行出力
 	mov	rax, 60			; rax = 60:system call ID
