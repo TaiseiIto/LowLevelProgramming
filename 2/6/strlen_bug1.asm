@@ -8,6 +8,8 @@ section .text
 
 strlen:				; unsigned long strlen(char *rdi)
 				; {
+	push r13		; 	*(rsp -= 8) = r13;
+	xor r13, r13		; 	(r13 ^= r13):(r13 = 0);
 .loop:				; .loop:
 	cmp byte [rdi + r13], 0	; 	//compare rdi[r13] and '\0'
 	je .end			; 	if(rdi[r13] == '\0')goto .end;
@@ -15,6 +17,8 @@ strlen:				; unsigned long strlen(char *rdi)
 	jmp .loop		; 	goto .loop;
 .end:				; .end:
 	mov rax, r13		; 	rax = r13;
+	pop r13			; 	r13 = *rsp:caller r13; rsp += 4;
+	ret			; 	return rax;
 				; }
 
 _start:				; int main(void)
