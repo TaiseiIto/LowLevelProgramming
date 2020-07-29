@@ -1,16 +1,20 @@
 global _start
 
 section .data
-message: db 'Hello, World!', 0x0a	; 表示する文字列.0x0aは改行
+
+message: db 'Hello, World!', 0x0a	; char *message = "Hello, World!\n";
 
 section .text
-_start:
-	mov rax, 1			; write system callの番号
-	mov rdi, 1			; 書き込み先file descriptor stdout
-	mov rsi, message		; 書き込む文字列
-	mov rdx, 14			; 書き込むバイト数
-	syscall				; write system call
-	mov rax, 60			; exit system callの番号
-	mov rdi, 0			; このプログラムの返り値
-	syscall				; exit system call
+
+_start:					; int main(void)
+					; {
+	mov rax, 1			; 	rax = 1:write system call ID;
+	mov rdi, 1			; 	rdi = 1:stdout;
+	mov rsi, message		; 	rsi = message:"Hello, World!\n";
+	mov rdx, 14			; 	rdx = 14:strlen(rsi:message:"Hello, World!\n");
+	syscall				; 	write(rdi:1:stdout, rsi:message:"Hello, World!\n", rdx:14:strlen(rsi:message:"Hello, World!\n"));
+	mov rax, 60			; 	rax = 60:exit system call ID;
+	mov rdi, 0			; 	rdi = 0:return value
+	syscall				; 	return rdi:0;
+					; }
 
