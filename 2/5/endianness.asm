@@ -27,16 +27,16 @@ print_hex:				;long print_hex(unsigned long rdi:hex)
 	mov	rdx, 1			;	rdx = 1(strlen arg of the write syscall);
 	mov	rcx, 64			;	rcx = 64:(write a digit of hex from rcx bit to rcx + 3 bit);
 iterate:				;iterate:
-	push	rax			;	*rsp = rax:hex; rsp -= 8;
+	push	rax			;	*(rsp -= 8) = rax:hex;
 	sub	rcx, 4			;	rcx -= 4;(go to next digit of hex)
 	sar	rax, cl			;	rax:hex >>= rcx;(shift target digit to lowest byte)
 	and	rax, 0xf		;	rax &= 0xf;(rax = target digit of hex)
 	lea	rsi, [codes + rax]	;	rsi = (codes + rax):(letter address of target digit of hex);
 	mov	rax, 1			;	rax = 1:(write syscall);
-	push	rcx			;	*rsp = rcx; rsp -= 8;(protect rcx from syscall)
+	push	rcx			;	*(rsp -= 8) = rcx;(protect rcx from syscall)
 	syscall				;	write(rdi:1:stdout, rsi:(letter addtess of target digit of hex), rdx:1:strlen);
-	pop	rcx			;	rcx = *(rsp += 8);(recover rcx)
-	pop	rax			;	rax = *(rsp += 8):hex;
+	pop	rcx			;	rsp += 8;rcx = *rsp;(recover rcx)
+	pop	rax			;	rsp += 8;rax = *rsp:hex;
 	test	rcx, rcx		;	if(rcx != 0)goto iterate;
 	jnz	iterate			;
 	ret				;	return rax:hex;
