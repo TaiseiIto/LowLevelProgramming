@@ -1,52 +1,56 @@
 section .data
 
-codes: db '0123456789ABCDEF'
+codes: db '0123456789ABCDEF'		;char *codes = "0123456789ABCDEF";
 
-demo1: dq 0x0123456789abcdef
+demo1: dq 0x0123456789abcdef		;unsigned long demo1[1] = {0x0123456789ABCDEF};
 
 demo2: db 0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef
-
-newline_char: db 0x0a
+					;unsigned char demo2[8] = {0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef};
+newline_char: db 0x0a			;char *newline_char = "\n";
 
 section .text
 global _start
 
-print_newline:				;改行表示関数ssize_t print_newline(void);
-	mov	rax, 1			; rax = 1:write system call ID ;
-	mov	rdi, 1			; rdi:system callの第一引数 = 1:書き込み先file descriptor(stdout);
-	mov	rsi, newline_char	; rsi:system callの第二引数 = 書き込む文字列の先頭アドレス;
-	mov	rdx, 1			; rdx:system callの第三引数 = 書き込むバイト数;
-	syscall				; write system call
-	ret				; return rax:書いたバイト数;
+print_newline:				;long print_newline(void)
+					;{
+	mov	rax, 1			;
+	mov	rdi, 1			;
+	mov	rsi, newline_char	;
+	mov	rdx, 1			;
+	syscall				;	return write(rdi:stdout, rsi:newline_char:"\n", rdx:1:strlen(newline_char:"\n"));
+	ret				;}
 
-print_hex:				;16進数表示関数unsigned int print_hex(unsigned int n);
-	mov	rax, rdi		; rax = n;
-	mov	rdi, 1			; rdi:system callの第一引数 = 1:書き込み先file descriptor(stdout)
-	mov	rdx, 1			; rdx:system callの第三引数 = 1:書き込むバイト数(1桁)
-	mov	rcx, 64			; rcx = 64:nのビット数
-iterate:				; 一桁ずつ表示していくループ
-	push	rax			; rax:nを退避
-	sub	rcx, 4			; rcx/4:表示する桁位置をデクリメント
-	sar	rax, cl			; rax:n >>= cl:4*表示する桁数; 表示する桁位置を最下位4ビットに持っていく
-	and	rax, 0xf		; rax &= 0xf; 表示する桁の4ビットを残す
-	lea	rsi, [codes + rax]	; rsi:system callの第二引数 = (codes + rax:表示する桁の4ビット):表示する文字列のアドレス;
-	mov	rax, 1			; rax = 1:write system call ID;
-	push	rcx			; syscallは(rcx:4*表示する桁位置)を破壊するので退避
-	syscall				; write system call
-	pop	rcx			; (rcx:4*表示する桁位置)復活
-	pop	rax			; rax:n復活
-	test	rcx, rcx		; rcx & rcxを計算しrflagsを立てる
-	jnz	iterate			; 計算結果:(rcx & rcx):rcxが0でない限りiterateへ飛ぶ
-	ret				; return rax:n;
+print_hex:				;long print_hex(unsigned long rdi:hex)
+					;{
+	mov	rax, rdi		;	rax = rdi:hex;
+	mov	rdi, 1			;	rdi = 1:stdout:(file descriptor arg of write syscall);
+	mov	rdx, 1			;	rdx = 1(strlen arg of the write syscall);
+	mov	rcx, 64			;	rcx = 64:(write a digit of hex from rcx bit to rcx + 3 bit);
+iterate:				;iterate:
+	push	rax			;	*rsp = rax:hex; rsp -= 8;
+	sub	rcx, 4			;	rcx -= 4;(go to next digit of hex)
+	sar	rax, cl			;	rax:hex >>= rcx;(shift target digit to lowest byte)
+	and	rax, 0xf		;	rax &= 0xf;(rax = target digit of hex)
+	lea	rsi, [codes + rax]	;	rsi = (codes + rax):(letter address of target digit of hex);
+	mov	rax, 1			;	rax = 1:(write syscall);
+	push	rcx			;	*rsp = rcx; rsp -= 8;(protect rcx from syscall)
+	syscall				;	write(rdi:1:stdout, rsi:(letter addtess of target digit of hex), rdx:1:strlen);
+	pop	rcx			;	rcx = *(rsp += 8);(recover rcx)
+	pop	rax			;	rax = *(rsp += 8):hex;
+	test	rcx, rcx		;	if(rcx != 0)goto iterate;
+	jnz	iterate			;
+	ret				;	return rax:hex;
+					;}
 
-_start:					;main関数
-	mov	rdi, [demo1]		; rdi:print_hexの第一引数:表示する数 = [demo1]
-	call	print_hex		; rdiを16進数で表示
-	call	print_newline		; 改行出力
-	mov	rdi, [demo2]		; rdi:print_hexの第一引数:表示する数 = [demo2]
-	call	print_hex		; rdiを16進数で表示
-	call	print_newline		; 改行出力
-	mov	rax, 60			; rax = 60:system call ID
-	xor	rdi, rdi		; (rdi ^= rdi):(rdi:exit system callの第一引数:プログラムの返り値 = 0)
-	syscall				; exit system call
+_start:					;long main(void)
+					;{
+	mov	rdi, [demo1]		;
+	call	print_hex		;	print_hex(*demo1:0x0123456789abcdef);
+	call	print_newline		;	print_newline();
+	mov	rdi, [demo2]		;
+	call	print_hex		;	print_hex(*demo2:{0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef});
+	call	print_newline		;	print_newline();
+	mov	rax, 60			;	exit(0);
+	xor	rdi, rdi		;
+	syscall				;}
 
